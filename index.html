@@ -5,29 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kerim Üner Alpar - Portfolio</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
-    <div class="loading-screen">
-        <div class="loader">
-            <div class="loader-text">Portfolio Yükleniyor...</div>
-            <div class="progress-bar">
-                <div class="progress"></div>
-            </div>
+    <div id="loading" class="loading">
+        <div class="loading-text">Portfolio Yükleniyor...</div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
         </div>
     </div>
-    
-    <div class="portfolio-container">
-        <div class="pages-wrapper" id="pagesWrapper"></div>
+
+    <div id="portfolio" class="portfolio">
+        <div id="slides" class="slides"></div>
     </div>
-    
+
     <div class="navigation">
-        <button class="nav-btn prev" disabled>←</button>
-        <span class="page-indicator">1 / ?</span>
-        <button class="nav-btn next">→</button>
+        <button id="prev" class="nav-btn">←</button>
+        <span id="pageInfo" class="page-info">1 / 65</span>
+        <button id="next" class="nav-btn">→</button>
     </div>
-    
-    <!-- IMAGE VIEWER KULLANIYORUZ, MAIN.JS DEĞİL! -->
-    <script src="js/image-viewer.js"></script>
+
+    <script src="js/portfolio.js"></script>
 </body>
 </html>

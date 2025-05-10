@@ -6,16 +6,14 @@
 
 html, body {
     height: 100%;
+    width: 100%;
     overflow: hidden;
     background: #000;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.loading-screen {
+.loading {
     position: fixed;
     top: 0;
     left: 0;
@@ -23,18 +21,21 @@ body {
     height: 100%;
     background: #000;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 1000;
+    transition: opacity 0.5s ease-out;
 }
 
-.loader {
-    text-align: center;
+.loading.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
-.loader-text {
+.loading-text {
     font-size: 24px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-weight: 300;
     letter-spacing: 2px;
 }
@@ -49,56 +50,40 @@ body {
 
 .progress {
     height: 100%;
-    background: linear-gradient(90deg, #0066ff, #00ccff);
     width: 0;
+    background: linear-gradient(90deg, #007AFF, #00C7FF);
     transition: width 0.3s ease;
 }
 
-.portfolio-container {
-    position: fixed;
-    top: 0;
-    left: 0;
+.portfolio {
+    position: relative;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
 }
 
-.pages-wrapper {
+.slides {
     display: flex;
     height: 100%;
-    width: 100%;
-    transform: translateX(0);
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.page {
-    position: relative;
+.slide {
     min-width: 100vw;
-    width: 100vw;
     height: 100vh;
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-    transition: all 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    position: relative;
 }
 
-.page.active {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-}
-
-/* RESİMLER KESİLMEYECEK - CONTAIN KULLANIYORUZ */
-.page-image {
-    width: 100%;
-    height: 100%;
+.slide img {
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
-    /* Mild shadow for depth */
-    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+    display: block;
 }
 
-/* Beautiful navigation */
 .navigation {
     position: fixed;
     bottom: 30px;
@@ -106,40 +91,31 @@ body {
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 25px;
-    background: rgba(0, 0, 0, 0.85);
+    gap: 30px;
+    background: rgba(0, 0, 0, 0.8);
     padding: 15px 30px;
-    border-radius: 100px;
-    backdrop-filter: blur(15px);
-    z-index: 1000;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn {
     background: none;
-    border: 2px solid transparent;
+    border: none;
     color: #fff;
-    font-size: 20px;
+    font-size: 24px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-    padding: 10px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
 }
 
-.nav-btn:hover:not(:disabled) {
+.nav-btn:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-.nav-btn:active:not(:disabled) {
-    transform: scale(0.95);
 }
 
 .nav-btn:disabled {
@@ -147,45 +123,22 @@ body {
     cursor: not-allowed;
 }
 
-.page-indicator {
-    font-size: 15px;
-    font-weight: 500;
+.page-info {
+    font-size: 16px;
     min-width: 80px;
     text-align: center;
-    letter-spacing: 0.5px;
 }
 
-/* Smooth animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Mobile optimizations */
 @media (max-width: 768px) {
     .navigation {
         bottom: 20px;
-        padding: 12px 24px;
+        padding: 10px 20px;
         gap: 20px;
     }
     
     .nav-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-}
-
-/* Landscape mode for better A3 viewing */
-@media (orientation: landscape) {
-    .page-image {
-        max-width: 95vw;
-        max-height: 90vh;
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
     }
 }
