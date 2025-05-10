@@ -1,7 +1,7 @@
 class PortfolioViewer {
     constructor() {
         this.currentPage = 1;
-        this.totalPages = 0;
+        this.totalPages = 65; // Sabit sayfa sayısı
         this.isLoading = false;
         this.pagesWrapper = document.getElementById('pagesWrapper');
         this.pageIndicator = document.querySelector('.page-indicator');
@@ -11,61 +11,46 @@ class PortfolioViewer {
         this.progressBar = document.querySelector('.progress');
         this.loadedPages = new Set();
         
+        console.log('Portfolio Viewer initializing with', this.totalPages, 'pages');
         this.init();
     }
     
     async init() {
         try {
-            await this.detectTotalPages();
+            this.pageIndicator.textContent = `1 / ${this.totalPages}`;
             await this.loadInitialPages();
             this.setupEventListeners();
             this.hideLoadingScreen();
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Init error:', error);
             this.showError();
         }
     }
     
-    async detectTotalPages() {
-        // Dinamik olarak toplam sayfa sayısını bul
-        let pageNum = 1;
-        let found = true;
-        
-        while (found && pageNum <= 200) { // Max 200 sayfa kontrol et
-            try {
-                const response = await fetch(`assets/images/page-${pageNum}.png`, { method: 'HEAD' });
-                if (response.ok) {
-                    pageNum++;
-                } else {
-                    found = false;
-                }
-            } catch {
-                found = false;
-            }
-        }
-        
-        this.totalPages = pageNum - 1;
-        console.log(`Total pages detected: ${this.totalPages}`);
-        this.pageIndicator.textContent = `1 / ${this.totalPages}`;
-    }
-    
     async loadInitialPages() {
-        // İlk 3 sayfayı yükle
-        for (let i = 1; i <= Math.min(3, this.totalPages); i++) {
+        console.log('Loading initial pages...');
+        // İlk 5 sayfayı yükle
+        for (let i = 1; i <= Math.min(5, this.totalPages); i++) {
             await this.loadPage(i);
         }
     }
     
     async loadPage(pageNum) {
-        if (this.loadedPages.has(pageNum)) return;
+        if (this.loadedPages.has(pageNum)) {
+            console.log(`Page ${pageNum} already loaded`);
+            return;
+        }
         
         const imageSrc = `assets/images/page-${pageNum}.png`;
+        console.log(`Loading page ${pageNum} from ${imageSrc}`);
+        
         try {
             await this.loadImage(imageSrc, pageNum);
             this.loadedPages.add(pageNum);
+            console.log(`Page ${pageNum} loaded successfully`);
             
             // Progress bar
-            const progress = (pageNum / Math.min(3, this.totalPages)) * 100;
+            const progress = (this.loadedPages.size / Math.min(5, this.totalPages)) * 100;
             this.progressBar.style.width = `${progress}%`;
         } catch (error) {
             console.error(`Failed to load page ${pageNum}:`, error);
@@ -75,16 +60,28 @@ class PortfolioViewer {
     loadImage(src, pageNum) {
         return new Promise((resolve, reject) => {
             const img = new Image();
+            
             img.onload = () => {
-                this.createPageElement(src, pageNum);
+                console.log(`Image loaded: ${src}`);
+                this.createPageElement(img.src, pageNum);
                 resolve();
             };
-            img.onerror = reject;
+            
+            img.onerror = (e) => {
+                console.error(`Image load error for ${src}:`, e);
+                reject(e);
+            };
+            
             img.src = src;
         });
     }
     
     createPageElement(src, pageNum) {
+        // Eğer zaten varsa, ekleme
+        if (document.querySelector(`.page[data-page="${pageNum}"]`)) {
+            return;
+        }
+        
         const pageDiv = document.createElement('div');
         pageDiv.className = `page ${pageNum === 1 ? 'active' : ''}`;
         pageDiv.dataset.page = pageNum;
@@ -92,10 +89,19 @@ class PortfolioViewer {
         const img = document.createElement('img');
         img.src = src;
         img.className = 'page-image';
-        img.loading = 'lazy'; // Lazy loading ekle
+        img.loading = 'lazy';
         
         pageDiv.appendChild(img);
-        this.pagesWrapper.appendChild(pageDiv);
+        
+        // Sayfaları sıralı ekle
+        const pages = Array.from(this.pagesWrapper.children);
+        const insertIndex = pages.findIndex(p => parseInt(p.dataset.page) > pageNum);
+        
+        if (insertIndex === -1) {
+            this.pagesWrapper.appendChild(pageDiv);
+        } else {
+            this.pagesWrapper.insertBefore(pageDiv, pages[insertIndex]);
+        }
     }
     
     hideLoadingScreen() {
@@ -140,8 +146,9 @@ class PortfolioViewer {
             this.isLoading = true;
             this.currentPage--;
             
-            // Önceki ve sonraki sayfaları önceden yükle
-            this.preloadNearbyPages();
+            // Sayfayı yükle
+            await this.ensurePageLoaded(this.currentPage);
+            await this.preloadNearbyPages();
             this.transitionToPage();
         }
     }
@@ -151,22 +158,35 @@ class PortfolioViewer {
             this.isLoading = true;
             this.currentPage++;
             
-            // Önceki ve sonraki sayfaları önceden yükle
-            this.preloadNearbyPages();
+            // Sayfayı yükle
+            await this.ensurePageLoaded(this.currentPage);
+            await this.preloadNearbyPages();
             this.transitionToPage();
         }
     }
     
+    async ensurePageLoaded(pageNum) {
+        if (!this.loadedPages.has(pageNum)) {
+            console.log(`Loading page ${pageNum} on demand`);
+            await this.loadPage(pageNum);
+        }
+    }
+    
     async preloadNearbyPages() {
-        const pagesToPreload = [
-            this.currentPage - 1,
-            this.currentPage,
-            this.currentPage + 1
-        ].filter(p => p > 0 && p <= this.totalPages);
+        const buffer = 2; // Önden ve arkadan 2 sayfa yükle
+        const pagesToPreload = [];
+        
+        for (let i = this.currentPage - buffer; i <= this.currentPage + buffer; i++) {
+            if (i > 0 && i <= this.totalPages) {
+                pagesToPreload.push(i);
+            }
+        }
+        
+        console.log('Preloading pages:', pagesToPreload);
         
         for (const pageNum of pagesToPreload) {
             if (!this.loadedPages.has(pageNum)) {
-                this.loadPage(pageNum);
+                this.loadPage(pageNum); // await kullanmadan arka planda yükle
             }
         }
     }
@@ -197,6 +217,8 @@ class PortfolioViewer {
         this.pageIndicator.textContent = `${this.currentPage} / ${this.totalPages}`;
         this.prevBtn.disabled = this.currentPage === 1;
         this.nextBtn.disabled = this.currentPage === this.totalPages;
+        
+        console.log(`Transitioned to page ${this.currentPage}`);
     }
     
     showError() {
@@ -213,5 +235,6 @@ class PortfolioViewer {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, starting portfolio viewer...');
     new PortfolioViewer();
 });
