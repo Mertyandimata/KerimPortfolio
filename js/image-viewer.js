@@ -11,6 +11,7 @@ class PortfolioViewer {
         this.progressBar = document.querySelector('.progress');
         this.loadedPages = new Set();
         
+        console.log('Starting Portfolio Viewer...');
         this.init();
     }
     
@@ -27,24 +28,34 @@ class PortfolioViewer {
     }
     
     async loadInitialPages() {
-        // İlk 5 sayfayı yükle
-        for (let i = 1; i <= Math.min(5, this.totalPages); i++) {
+        console.log('Loading initial pages...');
+        // İlk 3 sayfayı yükle
+        for (let i = 1; i <= Math.min(3, this.totalPages); i++) {
             await this.loadPage(i);
         }
+    }
+    
+    formatPageNumber(num) {
+        // 1 -> 01, 2 -> 02, 10 -> 10
+        return num.toString().padStart(2, '0');
     }
     
     async loadPage(pageNum) {
         if (this.loadedPages.has(pageNum)) return;
         
-        // Dosya isimleri page-01, page-02 formatında
-        const paddedNum = String(pageNum).padStart(2, '0');
-        const imageSrc = `assets/images/page-${paddedNum}.png`;
+        // Dosya isimleri: page-01.png, page-02.png formatında
+        const formattedNum = this.formatPageNumber(pageNum);
+        const imageSrc = `assets/images/page-${formattedNum}.png`;
+        
+        console.log(`Loading page ${pageNum} from ${imageSrc}`);
         
         try {
             await this.loadImage(imageSrc, pageNum);
             this.loadedPages.add(pageNum);
+            console.log(`Successfully loaded page ${pageNum}`);
             
-            const progress = (this.loadedPages.size / Math.min(5, this.totalPages)) * 100;
+            // Progress bar
+            const progress = (this.loadedPages.size / Math.min(3, this.totalPages)) * 100;
             this.progressBar.style.width = `${progress}%`;
         } catch (error) {
             console.error(`Failed to load page ${pageNum}:`, error);
@@ -56,17 +67,25 @@ class PortfolioViewer {
             const img = new Image();
             
             img.onload = () => {
+                console.log(`Image loaded: ${src}`);
                 this.createPageElement(img.src, pageNum);
                 resolve();
             };
             
-            img.onerror = reject;
+            img.onerror = (e) => {
+                console.error(`Image load error for ${src}`);
+                reject(e);
+            };
+            
             img.src = src;
         });
     }
     
     createPageElement(src, pageNum) {
-        if (document.querySelector(`.page[data-page="${pageNum}"]`)) return;
+        // Eğer sayfa zaten varsa ekleme
+        if (document.querySelector(`.page[data-page="${pageNum}"]`)) {
+            return;
+        }
         
         const pageDiv = document.createElement('div');
         pageDiv.className = `page ${pageNum === 1 ? 'active' : ''}`;
@@ -75,7 +94,6 @@ class PortfolioViewer {
         const img = document.createElement('img');
         img.src = src;
         img.className = 'page-image';
-        img.loading = 'lazy';
         
         pageDiv.appendChild(img);
         
@@ -93,7 +111,7 @@ class PortfolioViewer {
     hideLoadingScreen() {
         gsap.to(this.loadingScreen, {
             opacity: 0,
-            duration: 0.8,
+            duration: 0.5,
             onComplete: () => {
                 this.loadingScreen.style.display = 'none';
             }
@@ -114,7 +132,7 @@ class PortfolioViewer {
         
         this.pagesWrapper.addEventListener('touchstart', (e) => {
             touchStartX = e.changedTouches[0].screenX;
-        });
+        }, { passive: true });
         
         this.pagesWrapper.addEventListener('touchend', (e) => {
             const touchEndX = e.changedTouches[0].screenX;
@@ -124,7 +142,7 @@ class PortfolioViewer {
                 if (diff > 0) this.goToNextPage();
                 else this.goToPrevPage();
             }
-        });
+        }, { passive: true });
     }
     
     async goToPrevPage() {
@@ -133,7 +151,6 @@ class PortfolioViewer {
             this.currentPage--;
             
             await this.ensurePageLoaded(this.currentPage);
-            await this.preloadNearbyPages();
             this.transitionToPage();
         }
     }
@@ -144,7 +161,6 @@ class PortfolioViewer {
             this.currentPage++;
             
             await this.ensurePageLoaded(this.currentPage);
-            await this.preloadNearbyPages();
             this.transitionToPage();
         }
     }
@@ -155,35 +171,21 @@ class PortfolioViewer {
         }
     }
     
-    async preloadNearbyPages() {
-        const buffer = 2;
-        const pagesToPreload = [];
-        
-        for (let i = this.currentPage - buffer; i <= this.currentPage + buffer; i++) {
-            if (i > 0 && i <= this.totalPages) {
-                pagesToPreload.push(i);
-            }
-        }
-        
-        for (const pageNum of pagesToPreload) {
-            if (!this.loadedPages.has(pageNum)) {
-                this.loadPage(pageNum);
-            }
-        }
-    }
-    
     transitionToPage() {
         const translateX = -(this.currentPage - 1) * 100;
         
         gsap.to(this.pagesWrapper, {
             x: `${translateX}vw`,
-            duration: 0.6,
-            ease: "power2.inOut",
+            duration: 0.8,
+            ease: "power3.inOut",
             onComplete: () => {
                 this.isLoading = false;
+                // Yakın sayfaları önceden yükle
+                this.preloadNearbyPages();
             }
         });
         
+        // Update active states
         document.querySelectorAll('.page').forEach((page) => {
             const pageNum = parseInt(page.dataset.page);
             if (pageNum === this.currentPage) {
@@ -193,9 +195,24 @@ class PortfolioViewer {
             }
         });
         
+        // Update navigation
         this.pageIndicator.textContent = `${this.currentPage} / ${this.totalPages}`;
         this.prevBtn.disabled = this.currentPage === 1;
         this.nextBtn.disabled = this.currentPage === this.totalPages;
+    }
+    
+    async preloadNearbyPages() {
+        // Önde ve arkada 2'şer sayfa yükle
+        const pagesToLoad = [];
+        for (let i = -2; i <= 2; i++) {
+            const pageNum = this.currentPage + i;
+            if (pageNum > 0 && pageNum <= this.totalPages && !this.loadedPages.has(pageNum)) {
+                pagesToLoad.push(pageNum);
+            }
+        }
+        
+        // Paralel yükle
+        pagesToLoad.forEach(pageNum => this.loadPage(pageNum));
     }
     
     showError() {
@@ -210,6 +227,7 @@ class PortfolioViewer {
     }
 }
 
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     new PortfolioViewer();
 });

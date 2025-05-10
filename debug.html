@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug - Image Check</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h1>Image Files Debug</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        // Test first 5 images
+        for (let i = 1; i <= 5; i++) {
+            const num = i.toString().padStart(2, '0');
+            const img = new Image();
+            img.src = `assets/images/page-${num}.png`;
+            
+            img.onload = () => {
+                output.innerHTML += `<p style="color: green;">✓ page-${num}.png loaded successfully</p>`;
+                output.innerHTML += `<img src="${img.src}" style="max-width: 200px; display: block; margin: 10px 0;">`;
+            };
+            
+            img.onerror = () => {
+                output.innerHTML += `<p style="color: red;">✗ page-${num}.png failed to load</p>`;
+            };
+        }
+    </script>
+</body>
+</html>

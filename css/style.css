@@ -7,11 +7,11 @@
 html, body {
     height: 100%;
     overflow: hidden;
+    background: #000;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #000;
     color: #fff;
 }
 
@@ -80,66 +80,52 @@ body {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transform: scale(0.95);
-    transition: all 0.5s ease;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 .page.active {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
 }
 
-/* TAM EKRAN RESİM */
-.page-image {
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover; /* Tam ekranı kaplar, kırpabilir */
-    /* object-fit: contain; */ /* Alternatif: Resmi tam gösterir ama boşluk bırakabilir */
-}
-
-/* Eğer resmin oranını koruyarak tam sığdırmak isterseniz: */
+/* RESİMLER KESİLMEYECEK - CONTAIN KULLANIYORUZ */
 .page-image {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #000;
+    /* Mild shadow for depth */
+    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
 }
 
-/* A3 yatay formatı için özel ayar */
-@media (min-aspect-ratio: 297/210) {
-    .page-image {
-        width: 100vw;
-        height: auto;
-        max-height: 100vh;
-    }
-}
-
+/* Beautiful navigation */
 .navigation {
     position: fixed;
-    bottom: 20px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 20px;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 12px 24px;
-    border-radius: 50px;
-    backdrop-filter: blur(10px);
+    gap: 25px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 15px 30px;
+    border-radius: 100px;
+    backdrop-filter: blur(15px);
     z-index: 1000;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .nav-btn {
     background: none;
-    border: none;
+    border: 2px solid transparent;
     color: #fff;
     font-size: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 8px;
-    width: 40px;
-    height: 40px;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    padding: 10px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -147,8 +133,13 @@ body {
 }
 
 .nav-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
     transform: scale(1.1);
+}
+
+.nav-btn:active:not(:disabled) {
+    transform: scale(0.95);
 }
 
 .nav-btn:disabled {
@@ -157,22 +148,44 @@ body {
 }
 
 .page-indicator {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
-    min-width: 60px;
+    min-width: 80px;
     text-align: center;
+    letter-spacing: 0.5px;
 }
 
+/* Smooth animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile optimizations */
 @media (max-width: 768px) {
     .navigation {
-        bottom: 15px;
-        padding: 10px 20px;
-        gap: 15px;
+        bottom: 20px;
+        padding: 12px 24px;
+        gap: 20px;
     }
     
     .nav-btn {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         font-size: 18px;
+    }
+}
+
+/* Landscape mode for better A3 viewing */
+@media (orientation: landscape) {
+    .page-image {
+        max-width: 95vw;
+        max-height: 90vh;
     }
 }
