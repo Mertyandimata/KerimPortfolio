@@ -26,16 +26,31 @@ class PortfolioViewer {
             this.initAnimations();
         } catch (error) {
             console.error('Error initializing portfolio:', error);
+            // Hata durumunda loading ekranını kaldır ve hata göster
+            this.loadingScreen.innerHTML = `
+                <div class="loader">
+                    <div class="loader-text">Hata: PDF yüklenemedi</div>
+                    <div style="font-size: 14px; margin-top: 10px;">${error.message}</div>
+                </div>
+            `;
         }
     }
     
     async loadPDF() {
         try {
-            const loadingTask = pdfjsLib.getDocument('assets/pdf/portfolio.pdf');
+            // GitHub Pages için doğru URL'yi kullanalım
+            const pdfUrl = window.location.hostname === 'localhost' 
+                ? 'assets/pdf/portfolio.pdf'
+                : 'https://mertyandimata.github.io/KerimPortfolio/assets/pdf/portfolio.pdf';
+                
+            console.log('PDF URL:', pdfUrl);
+            
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
             
             loadingTask.onProgress = (progress) => {
                 const percent = (progress.loaded / progress.total) * 100;
                 this.progressBar.style.width = percent + '%';
+                console.log(`Loading: ${percent.toFixed(0)}%`);
             };
             
             this.pdfDoc = await loadingTask.promise;
@@ -53,11 +68,13 @@ class PortfolioViewer {
             
         } catch (error) {
             console.error('Error loading PDF:', error);
+            throw error;
         }
     }
     
     async loadAllPages() {
         for (let pageNum = 1; pageNum <= this.totalPages; pageNum++) {
+            console.log(`Loading page ${pageNum} of ${this.totalPages}`);
             const page = await this.pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: 2.0 });
             
