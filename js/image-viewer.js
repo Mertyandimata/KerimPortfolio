@@ -1,7 +1,7 @@
 class PortfolioViewer {
     constructor() {
         this.currentPage = 1;
-        this.totalPages = 65; // Sabit sayfa sayısı
+        this.totalPages = 65;
         this.isLoading = false;
         this.pagesWrapper = document.getElementById('pagesWrapper');
         this.pageIndicator = document.querySelector('.page-indicator');
@@ -11,7 +11,6 @@ class PortfolioViewer {
         this.progressBar = document.querySelector('.progress');
         this.loadedPages = new Set();
         
-        console.log('Portfolio Viewer initializing with', this.totalPages, 'pages');
         this.init();
     }
     
@@ -28,7 +27,6 @@ class PortfolioViewer {
     }
     
     async loadInitialPages() {
-        console.log('Loading initial pages...');
         // İlk 5 sayfayı yükle
         for (let i = 1; i <= Math.min(5, this.totalPages); i++) {
             await this.loadPage(i);
@@ -36,20 +34,16 @@ class PortfolioViewer {
     }
     
     async loadPage(pageNum) {
-        if (this.loadedPages.has(pageNum)) {
-            console.log(`Page ${pageNum} already loaded`);
-            return;
-        }
+        if (this.loadedPages.has(pageNum)) return;
         
-        const imageSrc = `assets/images/page-${pageNum}.png`;
-        console.log(`Loading page ${pageNum} from ${imageSrc}`);
+        // Dosya isimleri page-01, page-02 formatında
+        const paddedNum = String(pageNum).padStart(2, '0');
+        const imageSrc = `assets/images/page-${paddedNum}.png`;
         
         try {
             await this.loadImage(imageSrc, pageNum);
             this.loadedPages.add(pageNum);
-            console.log(`Page ${pageNum} loaded successfully`);
             
-            // Progress bar
             const progress = (this.loadedPages.size / Math.min(5, this.totalPages)) * 100;
             this.progressBar.style.width = `${progress}%`;
         } catch (error) {
@@ -62,25 +56,17 @@ class PortfolioViewer {
             const img = new Image();
             
             img.onload = () => {
-                console.log(`Image loaded: ${src}`);
                 this.createPageElement(img.src, pageNum);
                 resolve();
             };
             
-            img.onerror = (e) => {
-                console.error(`Image load error for ${src}:`, e);
-                reject(e);
-            };
-            
+            img.onerror = reject;
             img.src = src;
         });
     }
     
     createPageElement(src, pageNum) {
-        // Eğer zaten varsa, ekleme
-        if (document.querySelector(`.page[data-page="${pageNum}"]`)) {
-            return;
-        }
+        if (document.querySelector(`.page[data-page="${pageNum}"]`)) return;
         
         const pageDiv = document.createElement('div');
         pageDiv.className = `page ${pageNum === 1 ? 'active' : ''}`;
@@ -146,7 +132,6 @@ class PortfolioViewer {
             this.isLoading = true;
             this.currentPage--;
             
-            // Sayfayı yükle
             await this.ensurePageLoaded(this.currentPage);
             await this.preloadNearbyPages();
             this.transitionToPage();
@@ -158,7 +143,6 @@ class PortfolioViewer {
             this.isLoading = true;
             this.currentPage++;
             
-            // Sayfayı yükle
             await this.ensurePageLoaded(this.currentPage);
             await this.preloadNearbyPages();
             this.transitionToPage();
@@ -167,13 +151,12 @@ class PortfolioViewer {
     
     async ensurePageLoaded(pageNum) {
         if (!this.loadedPages.has(pageNum)) {
-            console.log(`Loading page ${pageNum} on demand`);
             await this.loadPage(pageNum);
         }
     }
     
     async preloadNearbyPages() {
-        const buffer = 2; // Önden ve arkadan 2 sayfa yükle
+        const buffer = 2;
         const pagesToPreload = [];
         
         for (let i = this.currentPage - buffer; i <= this.currentPage + buffer; i++) {
@@ -182,11 +165,9 @@ class PortfolioViewer {
             }
         }
         
-        console.log('Preloading pages:', pagesToPreload);
-        
         for (const pageNum of pagesToPreload) {
             if (!this.loadedPages.has(pageNum)) {
-                this.loadPage(pageNum); // await kullanmadan arka planda yükle
+                this.loadPage(pageNum);
             }
         }
     }
@@ -203,7 +184,6 @@ class PortfolioViewer {
             }
         });
         
-        // Update active states
         document.querySelectorAll('.page').forEach((page) => {
             const pageNum = parseInt(page.dataset.page);
             if (pageNum === this.currentPage) {
@@ -213,12 +193,9 @@ class PortfolioViewer {
             }
         });
         
-        // Update navigation
         this.pageIndicator.textContent = `${this.currentPage} / ${this.totalPages}`;
         this.prevBtn.disabled = this.currentPage === 1;
         this.nextBtn.disabled = this.currentPage === this.totalPages;
-        
-        console.log(`Transitioned to page ${this.currentPage}`);
     }
     
     showError() {
@@ -233,8 +210,6 @@ class PortfolioViewer {
     }
 }
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, starting portfolio viewer...');
     new PortfolioViewer();
 });

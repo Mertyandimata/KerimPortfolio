@@ -11,7 +11,7 @@ html, body {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0a0a0a;
+    background: #000;
     color: #fff;
 }
 
@@ -21,7 +21,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #0a0a0a;
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,42 +89,57 @@ body {
     transform: scale(1);
 }
 
+/* TAM EKRAN RESİM */
 .page-image {
-    max-width: 85vw;
-    max-height: 80vh;
-    width: auto;
-    height: auto;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover; /* Tam ekranı kaplar, kırpabilir */
+    /* object-fit: contain; */ /* Alternatif: Resmi tam gösterir ama boşluk bırakabilir */
+}
+
+/* Eğer resmin oranını koruyarak tam sığdırmak isterseniz: */
+.page-image {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-    border-radius: 8px;
+    background: #000;
+}
+
+/* A3 yatay formatı için özel ayar */
+@media (min-aspect-ratio: 297/210) {
+    .page-image {
+        width: 100vw;
+        height: auto;
+        max-height: 100vh;
+    }
 }
 
 .navigation {
     position: fixed;
-    bottom: 30px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 30px;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 16px 32px;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 12px 24px;
     border-radius: 50px;
     backdrop-filter: blur(10px);
     z-index: 1000;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nav-btn {
     background: none;
     border: none;
     color: #fff;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
-    padding: 10px;
-    width: 48px;
-    height: 48px;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -132,7 +147,7 @@ body {
 }
 
 .nav-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);
 }
 
@@ -142,35 +157,22 @@ body {
 }
 
 .page-indicator {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
-    min-width: 80px;
+    min-width: 60px;
     text-align: center;
 }
 
-/* A3 yatay için özel düzenleme */
-@media (min-aspect-ratio: 16/9) {
-    .page-image {
-        max-width: 90vw;
-        max-height: 85vh;
-    }
-}
-
 @media (max-width: 768px) {
-    .page-image {
-        max-width: 95vw;
-        max-height: 70vh;
-    }
-    
     .navigation {
-        bottom: 20px;
-        padding: 12px 24px;
-        gap: 20px;
+        bottom: 15px;
+        padding: 10px 20px;
+        gap: 15px;
     }
     
     .nav-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
     }
 }
