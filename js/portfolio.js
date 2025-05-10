@@ -9,71 +9,113 @@ class Portfolio {
         this.prevBtn = document.getElementById('prev');
         this.nextBtn = document.getElementById('next');
         this.isTransitioning = false;
+        this.loadedPages = {};
         
         this.init();
     }
     
     async init() {
-        this.pageInfo.textContent = `${this.currentPage} / ${this.totalPages}`;
-        this.prevBtn.disabled = true;
+        console.log('Portfolio başlatılıyor...');
         
-        await this.loadImages();
+        // Önce tüm slide'ları sırayla oluştur (boş placeholder'lar)
+        this.createAllSlides();
+        
+        // İlk sayfaları yükle
+        await this.loadInitialPages();
+        
+        // Event listener'ları kur
         this.setupEventListeners();
+        
+        // Loading'i kapat
         this.hideLoading();
+        
+        // UI güncelle
+        this.updateUI();
+    }
+    
+    createAllSlides() {
+        // 1'den 65'e kadar tüm slide'ları oluştur (henüz resim yok)
+        for (let i = 1; i <= this.totalPages; i++) {
+            const slide = document.createElement('div');
+            slide.className = 'slide';
+            slide.dataset.page = i;
+            slide.id = `slide-${i}`;
+            
+            // Placeholder div
+            const placeholder = document.createElement('div');
+            placeholder.className = 'placeholder';
+            placeholder.textContent = `Sayfa ${i} yükleniyor...`;
+            slide.appendChild(placeholder);
+            
+            this.slides.appendChild(slide);
+        }
+        
+        console.log(`${this.totalPages} slide oluşturuldu`);
     }
     
     getImagePath(pageNum) {
-        // page-01.png, page-02.png formatı için
+        // page-01.png, page-02.png formatı
         const paddedNum = pageNum.toString().padStart(2, '0');
         return `assets/images/page-${paddedNum}.png`;
     }
     
-    async loadImages() {
-        const loadPromises = [];
-        
-        // İlk birkaç resmi önceden yükle
+    async loadInitialPages() {
+        // İlk 5 sayfayı yükle
+        const promises = [];
         for (let i = 1; i <= Math.min(5, this.totalPages); i++) {
-            loadPromises.push(this.createSlide(i));
+            promises.push(this.loadPage(i));
         }
         
-        await Promise.all(loadPromises);
-        
-        // Progress bar'ı güncelle
-        this.progress.style.width = '100%';
+        await Promise.all(promises);
+        console.log('İlk sayfalar yüklendi');
     }
     
-    createSlide(pageNum) {
+    async loadPage(pageNum) {
+        // Zaten yüklenmişse tekrar yükleme
+        if (this.loadedPages[pageNum]) return;
+        
         return new Promise((resolve) => {
-            const slide = document.createElement('div');
-            slide.className = 'slide';
-            slide.dataset.page = pageNum;
-            
             const img = new Image();
-            img.src = this.getImagePath(pageNum);
+            const imagePath = this.getImagePath(pageNum);
             
             img.onload = () => {
-                slide.appendChild(img);
-                this.slides.appendChild(slide);
+                // Doğru slide'ı bul
+                const slide = document.getElementById(`slide-${pageNum}`);
                 
-                // Progress güncelle
-                const loadedCount = this.slides.children.length;
-                const progress = (loadedCount / Math.min(5, this.totalPages)) * 100;
-                this.progress.style.width = `${progress}%`;
+                if (slide) {
+                    // Placeholder'ı kaldır
+                    slide.innerHTML = '';
+                    
+                    // Resmi ekle
+                    img.className = 'page-image';
+                    slide.appendChild(img);
+                    
+                    this.loadedPages[pageNum] = true;
+                    console.log(`Sayfa ${pageNum} yüklendi`);
+                    
+                    // Progress güncelle
+                    const loadedCount = Object.keys(this.loadedPages).length;
+                    const progress = Math.min(100, (loadedCount / 5) * 100);
+                    this.progress.style.width = `${progress}%`;
+                }
                 
                 resolve();
             };
             
             img.onerror = () => {
-                console.error(`Failed to load page ${pageNum}`);
+                console.error(`Sayfa ${pageNum} yüklenemedi: ${imagePath}`);
+                
+                // Hata durumunda da slide'ı güncelle
+                const slide = document.getElementById(`slide-${pageNum}`);
+                if (slide) {
+                    slide.innerHTML = `<div class="error">Sayfa ${pageNum} yüklenemedi</div>`;
+                }
+                
                 resolve();
             };
+            
+            img.src = imagePath;
         });
-    }
-    
-    async ensurePageLoaded(pageNum) {
-        if (!document.querySelector(`.slide[data-page="${pageNum}"]`)) {
-            await this.createSlide(pageNum);
-        }
     }
     
     hideLoading() {
@@ -120,7 +162,6 @@ class Portfolio {
     async nextPage() {
         if (this.currentPage < this.totalPages && !this.isTransitioning) {
             this.currentPage++;
-            await this.ensurePageLoaded(this.currentPage);
             await this.goToPage(this.currentPage);
         }
     }
@@ -128,35 +169,44 @@ class Portfolio {
     async goToPage(pageNum) {
         this.isTransitioning = true;
         
-        // Yakındaki sayfaları önceden yükle
+        // Sayfayı yükle (henüz yüklenmemişse)
+        await this.loadPage(pageNum);
+        
+        // Yakındaki sayfaları yükle
         this.preloadNearbyPages(pageNum);
         
-        // Slide pozisyonunu ayarla
+        // Pozisyonu ayarla (pageNum - 1 çünkü array 0'dan başlar)
         const translateX = -(pageNum - 1) * 100;
         this.slides.style.transform = `translateX(${translateX}vw)`;
         
         // UI güncelle
-        this.pageInfo.textContent = `${pageNum} / ${this.totalPages}`;
-        this.prevBtn.disabled = pageNum === 1;
-        this.nextBtn.disabled = pageNum === this.totalPages;
+        this.currentPage = pageNum;
+        this.updateUI();
         
         setTimeout(() => {
             this.isTransitioning = false;
         }, 600);
     }
     
+    updateUI() {
+        this.pageInfo.textContent = `${this.currentPage} / ${this.totalPages}`;
+        this.prevBtn.disabled = this.currentPage === 1;
+        this.nextBtn.disabled = this.currentPage === this.totalPages;
+    }
+    
     preloadNearbyPages(currentPage) {
-        // Önde ve arkada 2'şer sayfa yükle
+        // Yakındaki sayfaları yükle
         for (let i = -2; i <= 2; i++) {
             const pageNum = currentPage + i;
             if (pageNum > 0 && pageNum <= this.totalPages) {
-                this.ensurePageLoaded(pageNum);
+                this.loadPage(pageNum);
             }
         }
     }
 }
 
-// Start the portfolio
+// Portfolio'yu başlat
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM yüklendi, portfolio başlatılıyor...');
     new Portfolio();
 });
